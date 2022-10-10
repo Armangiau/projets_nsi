@@ -4,26 +4,24 @@
 #### PROJET MACHINE A SOUS
 ### 1ère NSI Pavie 2022-2023
 
-from ast import match_case
-import numbers
 import random
 
 symboles = '♠♥♦♣7Ω' ## Symboles utilisés dans le bandit-manchot
 
 
-def choisir_symbole(symboles : str) -> str :
+def choisir_symbole(symboles : str) -> str:
     """
 fonction renvoyant un symbole aléatoire parmi une suite de symbole passée en argument
 """
-    assert ..., "Bad symbole argument"
+    assert symboles == str, "Bad symbole argument"
     return random.choice(symboles)
 
 def fabriquer_chaine(symboles : str, taille : int = 3) -> str:
     """ fonction renvoyant une chaine aléatoire de dimension taille,
 à partir de la liste de symbole symboles.
 """
-    assert ..., "Bad symbole argument"
-    assert ..., 'Bad taille argument'
+    assert symboles == str, "Bad symbole argument"
+    assert taille == int, 'Bad taille argument'
     return ''.join(choisir_symbole(symboles) for _ in range(taille))
 
 def compte_symboles_identiques(s : str, chaine: str) -> int :
