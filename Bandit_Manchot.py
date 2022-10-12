@@ -13,16 +13,17 @@ def choisir_symbole(symboles : str) -> str:
     """
 fonction renvoyant un symbole aléatoire parmi une suite de symbole passée en argument
 """
-    assert symboles == str, "Bad symbole argument"
+    assert type(symboles) == str, "Bad symbole argument"
     return random.choice(symboles)
 
 def fabriquer_chaine(symboles : str, taille : int = 3) -> str:
     """ fonction renvoyant une chaine aléatoire de dimension taille,
 à partir de la liste de symbole symboles.
 """
-    assert symboles == str, "Bad symbole argument"
-    assert taille == int, 'Bad taille argument'
+    assert type(symboles) == str, "Bad symbole argument"
+    assert type(taille) == int, 'Bad taille argument'
     return ''.join(choisir_symbole(symboles) for _ in range(taille))
+    # ici on joint les {taille}(3) symboles généré aléatoirement par fonction choisir_symbole
 
 def compte_symboles_identiques(s : str, chaine: str) -> int :
     """
@@ -43,8 +44,9 @@ Si le symbole n'est pas présent, renvoie 0
 0
 """
     return chaine.count(s) if chaine and s else 0
+    # compte le nombre de s dans chaine  - si chaine ou s est vide retourner 0
 
-def presence_symboles_identiques_multiples(symboles : str, chaine : str) -> bool :
+def presence_symboles_identiques_multiples(symboles : str, chaine : str) -> bool:
     """ Fonction renvoyant un booléen True si l'un des symboles présent dans
 la chaine symboles est présent plusieurs fois dans la chaine chaine, et False sinon
 
@@ -63,7 +65,10 @@ False
 >>> presence_symboles_identiques_multiples('', '')
 False
 """
-    return True in tuple(compte_symboles_identiques(symbole, chaine) > 1 for symbole in symboles)
+    for symbole in symboles:
+        if is_nb_symbole_identique_supérieur_a_1 := compte_symboles_identiques(symbole, chaine) > 1:
+            return is_nb_symbole_identique_supérieur_a_1
+    return False
 
 def table_gain(chaine : str, mise: int) -> int:
     """
@@ -74,30 +79,33 @@ def table_gain(chaine : str, mise: int) -> int:
 >>> table_gain('ΩΩΩ', 20)
 1000
 >>> table_gain('♥♥♥', 10)
-500
+200
 >>> table_gain('Ω7Ω', 15)
-300
+150
 >>> table_gain('♠♠7', 10)
-100
+50
 >>> table_gain('7♠♠', 10)
-100
+50
 >>> table_gain('♠7♣', 25)
 50
 >>> table_gain('♠77', 50)
 0
     """
-    match chaine :
-        case '777':
-            return mise * 100
-        case 'ΩΩΩ' | '♥♥♥':
-            return mise * 50
-        case 'Ω7Ω' :
-            return mise * 20
-        case '♠♠7' | '7♠♠' :
-            return mise * 10
-        case  '♠7♣' :
-            return mise * 2
+    if chaine == '777':
+        return mise * 100
+    elif chaine == 'ΩΩΩ':
+        return mise * 50
+    elif chaine == '♥♥♥' or chaine =='♠♠♠' or chaine == '♣♣♣' or chaine == '♦♦♦':
+        return mise * 20
+    elif chaine == 'Ω7Ω' or chaine =='ΩΩ7' or chaine == '7ΩΩ' :
+        return mise * 10    
+    chaine_sans_sept = chaine.replace('7', '')
+    if len(chaine_sans_sept) == 2 and chaine_sans_sept[0] == chaine_sans_sept[1] :
+        return mise * 5
+    if chaine[0] != chaine[1] != chaine[2]:
+        return mise * 2
     return 0
+    
     
 def saisir_mise(pot : int) -> int:
     """ Fonction récupérant la mise du joueur / de la joueuse,
@@ -152,13 +160,18 @@ def same_gamer(name, score, same_name_gamer) :
 def demande_inscription(capital: int) -> None :
     if demander('Voulez vous sauvegarder votre partie ?') :
         gamer = input("Quel est votre nom ?\nJe m'appel : ")
-        return sauve_score(gamer, capital, same_gamer)
-
+        sauve_score(gamer, capital, False, same_gamer)
 
 def ask_view_score() :
     if demander('Voulez vous regarder le classement ?') :
-        print(get_score())
+        print(read_save().affiche_score())
 
+def reprendre_partie() -> int:
+    if demander('Voulez vous reprendre une partie déjà jouée'):
+        nom = input('Quel était votre nom ?')
+        donee_txt = read_save.get_score()
+        return 
+        
 
 def main_game() -> int:
     """
@@ -170,10 +183,8 @@ def main_game() -> int:
     capital = 500
     
     while True:
-        print(f"{chr(27)}[2J")
         mise = saisir_mise(capital)
         capital -= mise
-
         resultat_du_tirage = fabriquer_chaine(symboles)
         guain = table_gain(resultat_du_tirage, mise)
         capital += guain
@@ -212,51 +223,68 @@ def presentation() -> None :
     input("(Appuyez sur la touche Entrée...)")
 
 
-def sauve_score(nom_j : str, score_j: int, same_name_gamer) -> None :
-    """ Fonction sauvant le nom du joueur/de la joueuse, ainsi que son score, dans un fichier texte
-nommé HighScore.txt, situé dans le même dossier que ce fichier python
-"""
-    try :
-        with open('HighScore.txt',"r", encoding="utf-8") as f :
-            lines = f.readlines()
-            hs = [{"nom":"", "score" : 0}]*9
-            for i, l in enumerate(lines) :
-                nom, score = l.split(" / ")
-                try :
-                    hs[i] = {"nom" : nom, "score" : int(score)}
-                except ValueError :
-                    hs[i] = {"nom" : nom, "score" :0}
-            is_better_than = len(hs)-1
-            for h in hs:
-                if h['nom'] == nom_j :
-                    nom_j, score_j = same_name_gamer(nom_j, score_j,h)
-            while is_better_than>=0 and score_j>hs[is_better_than]['score'] :                    
-                if is_better_than != len(hs)-1 :
-                    hs[is_better_than+1] = hs[is_better_than]
-                hs[is_better_than] = {"nom" : nom_j, "score" : score_j}
-                is_better_than -= 1
-    except FileNotFoundError :
-            hs =[{"nom" : nom_j, "score" : score_j}]
-    finally :
-        with open("HighScore.txt", "w", encoding="utf8") as f :
-            for s in hs :
+class sauve_score :
+
+    def __init__(self, nom_j : str, score_j: int, want_to_replay: bool, same_name_gamer) -> None :
+        self.nom_j, self.score_j, self.want_to_replay = nom_j, score_j, want_to_replay
+        self.same_name_gamer = same_name_gamer
+        self._read_previous_save()
+        self._write_score()
+
+    def _read_previous_save(self) -> None :
+        try :
+            with open('HighScore.txt',"r", encoding="utf-8") as file :
+                lines = file.readlines()
+                self.hight_score = [{"nom":"", "score" : 0, "want_to_replay": False}]*9
+                for i, l in enumerate(lines) :
+                    nom, score, replay = l.split(" / ")
+                    try :
+                        self.hight_score[i] = {"nom" : nom, "score" : int(score), "want_to_replay": bool(replay)}
+                    except ValueError :
+                        self.hight_score[i] = {"nom" : nom, "score" :0, "want_to_replay": False}
+            self._same_gamer()
+            self._sort_hight_score()
+        except FileNotFoundError :
+            self.hight_score =[{"nom" : self.nom_j, "score" : self.score_j, "want_to_replay": self.want_to_replay}]
+
+    def _same_gamer(self) -> None:
+        for gamer in self.hight_score:
+                if gamer['nom'] == self.nom_j :
+                    self.hight_score.remove(gamer)
+                    self.nom_j, self.score_j = self.same_name_gamer(self.nom_j, self.score_j, gamer)
+    
+    def _sort_hight_score(self) -> None:
+        is_better_than = len(self.hight_score)-1    
+        while is_better_than>=0 and self.score_j>self.hight_score[is_better_than]['score'] :                    
+            if is_better_than != len(self.hight_score)-1 :
+                self.hight_score[is_better_than+1] = self.hight_score[is_better_than]
+            self.hight_score[is_better_than] = {"nom" : self.nom_j, "score" : self.score_j, 'want_to_replay': self.want_to_replay}
+            is_better_than -= 1
+
+    def _write_score(self) -> None:
+        with open("HighScore.txt", "w", encoding="utf8") as file :
+            for s in self.hight_score :
                 if s is not None :
-                    f.write(f"{s['nom']} / {s['score']}\n")
+                    file.write(f"{s['nom']} / {s['score']} / {s['want_to_replay']}\n")
                 else :
-                    f.write(f"Inconnu / 0\n")
-                    
-def get_score() -> str:
-    """ Fonction récupérant les HighScore sauvegardés depuis un fichier HishScore.txt,
-et qui renvoie une chaine de caractères correctement formatée pour la console"""
-    lines =""
-    try :
-        with open('HighScore.txt',"r", encoding="utf-8") as f  :
-            lines = f.readlines()        
-    except FileNotFoundError :
-        lines = "Inconnu / 0\n"*9                
-    finally :
-        HS = [{'nom': line.split(" / ")[0], 'score' : line.split(" / ")[1].replace("\n","")} for line in lines]
-    return "".join(f"{i + 1} {d['nom']:>15} : {d['score']:>10} €\n" for i, d in enumerate(HS))    
+                    file.write(f"Inconnu / 0\n")
+
+
+class read_save :
+    def get_score(self):
+        """ Fonction récupérant les HighScore sauvegardés depuis un fichier HishScore.txt,
+            et qui renvoie une chaine de caractères correctement formatée pour la console"""
+        lines =""
+        try:
+            with open('HighScore.txt',"r", encoding="utf-8") as f  :
+                lines = f.readlines()
+        except FileNotFoundError :
+            lines = "Inconnu / 0\n"*9
+        finally:
+            return [{'nom': line.split(" / ")[0], 'score': line.split(" / ")[1], 'want_to_replay': line.split(" / ")[2].replace("\n", "")} for line in lines]
+
+    def affiche_score(self) -> str:
+        return "".join(f"{i + 1} {d['nom']:>15} : {d['score']:>10} €\n" for i, d in enumerate(self.get_score()))
 
 ## La partie ci-dessous n'est effectuée que si vous déclenchez le programme
 ## en tant que programme principal (notion de modules, vue en terminale)
