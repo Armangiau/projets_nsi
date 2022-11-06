@@ -215,6 +215,8 @@ Vous bénéficiez d'un petit privilège, faites en bone usage !
 >>> privilegies(["fabien", "paolo", "armand"], 'PaolO')
 Vous bénéficiez d'un petit privilège, faites en bone usage !
 42488844
+>>> privilegies(["fabien", "paolo", "armand"], 'Rust')
+500
     """
     if name.lower() in names :
         print("Vous bénéficiez d'un petit privilège, faites en bone usage !")
