@@ -23,7 +23,7 @@ def fabriquer_chaine(symboles : str, taille : int = 3) -> str:
     assert type(symboles) == str, "Bad symbole argument"
     assert type(taille) == int, 'Bad taille argument'
     return ''.join(choisir_symbole(symboles) for _ in range(taille))
-    # ici on joint les {taille}(3) symboles généré aléatoirement par fonction choisir_symbole
+    # ici on joint les {taille}(3) symboles généré aléatoirement par fonction choisir_>>> presence_symboles_identiques_multiples('', '')symbole
 
 def compte_symboles_identiques(s : str, chaine: str) -> int :
     """
@@ -43,7 +43,11 @@ Si le symbole n'est pas présent, renvoie 0
 >>> compte_symboles_identiques("", "")
 0
 """
-    return chaine.count(s) if chaine and s else 0
+    nb_symboles_identiques = 0
+    for char in chaine:
+        if char == s:
+            nb_symboles_identiques += 1
+    return nb_symboles_identiques
     # compte le nombre de s dans chaine  - si chaine ou s est vide retourner 0
 
 def presence_symboles_identiques_multiples(symboles : str, chaine : str) -> bool:
@@ -66,7 +70,8 @@ False
 False
 """
     for symbole in symboles:
-        if is_nb_symbole_identique_supérieur_a_1 := compte_symboles_identiques(symbole, chaine) > 1:
+        is_nb_symbole_identique_supérieur_a_1 =  compte_symboles_identiques(symbole, chaine) > 1 # on doit avoir plusieurs symboles identiques
+        if is_nb_symbole_identique_supérieur_a_1 :
             return is_nb_symbole_identique_supérieur_a_1
     return False
 
@@ -91,6 +96,8 @@ def table_gain(chaine : str, mise: int) -> int:
 >>> table_gain('♠77', 50)
 0
     """
+    
+    # les cas spéciaux de la table codés en dur
     if chaine == '777':
         return mise * 100
     elif chaine == 'ΩΩΩ':
@@ -98,38 +105,46 @@ def table_gain(chaine : str, mise: int) -> int:
     elif chaine == '♥♥♥' or chaine =='♠♠♠' or chaine == '♣♣♣' or chaine == '♦♦♦':
         return mise * 20
     elif chaine == 'Ω7Ω' or chaine =='ΩΩ7' or chaine == '7ΩΩ' :
-        return mise * 10    
-    chaine_sans_sept = chaine.replace('7', '')
-    if len(chaine_sans_sept) == 2 and chaine_sans_sept[0] == chaine_sans_sept[1] :
+        return mise * 10 
+    elif '7' in chaine and not '77' in chaine and presence_symboles_identiques_multiples(chaine, chaine) : # si la chaine contien un 7 et deux autres carractères identiques
         return mise * 5
-    if chaine[0] != chaine[1] != chaine[2]:
+    elif not presence_symboles_identiques_multiples(chaine, chaine): # si chaque symbole est différent
         return mise * 2
-    return 0
+    else:
+        return 0
     
     
 def saisir_mise(pot : int) -> int:
     """ Fonction récupérant la mise du joueur / de la joueuse,
      qui doit être un nombre entier compris entre 10 et pot.
      Cette fonction ne peut pas être testée par doctest."""
-    user_input = input(f'Entrez une mise entre 10 et {pot} :\n').strip()
-    if user_input.isnumeric() and 10 <= int(user_input) <= pot:
+    user_input = demander_str(f'Entrez une mise entière entre 10 et {pot} :\n')
+    if user_input.isnumeric() and 10 <= int(user_input) <= pot: # vérifit que la chaîne du nombre est entière et > à 0
         return int(user_input)
-    print(f"Vous n'avez pas saisie une valeure numérique define entre 10 et {pot}")
+    print(f"Vous n'avez pas saisie un entier define entre 10 et {pot}")
     return saisir_mise(pot)
 
-    
-                
 def demander(message = 'Voulez vous rejouer ?') ->  bool :
     """Fonction demandant au joueur / à la joueuse si il/elle souhaite faire l'action demandé.
     Le joueur/La joueuse doit pouvoir répondre par oui (ou o) ou par non (ou n),
     et la fonction doit être dumbproof.
     Ne peut pas être testée par doctest.
     """
-    user_input = input(f'{message} (o/n)').lower()
+    user_input = demander_str(f'{message} (o/n)').lower()
     if user_input not in ['o', 'oui', 'n', 'non'] :
         print('Je ne comprend pas voulez vous continuer ou arrêter')
         return demander(message)
     return user_input in ['o', 'oui']
+
+def demander_str(message) -> str:
+    """
+Demande d'entrer une chaine de caractère
+    """
+    while True :
+        entree_utilisteur = input(message).strip()
+        if entree_utilisteur :
+            return entree_utilisteur
+        print("Vous n'avez rien entré")
 
                 
 def afficher_bandit(chaine : str, gain : int) -> None:
@@ -150,28 +165,77 @@ def afficher_bandit(chaine : str, gain : int) -> None:
     """)
 
 def same_gamer(name, score, same_name_gamer) :
+    """
+    Fonction appelé lorsque deux noms sont identiques,
+    elle revoie le nom de la partie avec le meilleur score si l'utillisateur nous confirme avoir déjà joué,
+    sinon elle demande un nouveau nom à l'utilisateur
+"""
+    if same_name_gamer['want_to_replay'] == 'True' :
+        return name, score
     if demander('Avez vous déjà joué avec ce nom ?') :
         if same_name_gamer['score'] < score :
             return name, score
         else :
             return name, same_name_gamer['score']
-    return input('Votre nom à déjà été enregistré:\nVotre noveau nom est: '), score
+    return demander_str('Votre nom à déjà été enregistré:\nVotre noveau nom est: '), score
 
-def demande_inscription(capital: int) -> None :
+def demande_inscription(capital: int, gamer: str) -> None :
     if demander('Voulez vous sauvegarder votre partie ?') :
-        gamer = input("Quel est votre nom ?\nJe m'appel : ")
-        sauve_score(gamer, capital, False, same_gamer)
+        want_to_replay = demander('Voudrez vous continuer votre partie plus tard ?')
+        sauve_score(gamer, capital, want_to_replay, same_gamer)
 
 def ask_view_score() :
     if demander('Voulez vous regarder le classement ?') :
         print(read_save().affiche_score())
 
-def reprendre_partie() -> int:
-    if demander('Voulez vous reprendre une partie déjà jouée'):
-        nom = input('Quel était votre nom ?')
-        donee_txt = read_save.get_score()
-        return 
-        
+def reprendre_partie_and_set_score(nom: str) -> int:
+    """
+Regarde dans le fichier de sauvegarde si le joueur voulait reprendre sa partie et renvoie son score s'il veut toujours reprendre cette partie,
+sinon il renvoie la somme de 500 par défault
+    """
+    donees_txt = read_save().get_score()
+    for gamer in donees_txt :
+        assert type(gamer['want_to_replay']) == bool, '{want_to_replay} must be a boolean'
+        if gamer['nom'] == nom and gamer['want_to_replay'] and gamer['score'] > 0:
+            if demander('Voulez vous reprendre une partie déjà jouée'):
+                return gamer['score']
+    return privilegies(["fabien", "paolo", "armand"], nom) # quelque joueurs ayant participé au projet on droit à quelque privilèges
+
+
+def privilegies(names, name) -> int:
+    """
+Fonction calculant le capitale de départ des privilègiés en conertissant leur nom de base 36 en base 10,
+sinon pour les non privilégiés renvoitla somme par défaut : 50
+>>> privilegies(["fabien", "paolo", "armand"], 'fabien')
+Vous bénéficiez d'un petit privilège, faites en bone usage !
+924325871
+>>> privilegies(["fabien", "paolo", "armand"], 'Armand')
+Vous bénéficiez d'un petit privilège, faites en bone usage !
+651051625
+>>> privilegies(["fabien", "paolo", "armand"], 'PaolO')
+Vous bénéficiez d'un petit privilège, faites en bone usage !
+42488844
+    """
+    if name.lower() in names :
+        print("Vous bénéficiez d'un petit privilège, faites en bone usage !")
+        return int(name, 36)
+    return 500
+
+def presentation() -> None :
+    """ fonction affichant la présentation, et donnant les règles du jeu"""
+    print("\n"*50)
+    print("""
+##############################################
+#                                            #
+#              Bandit Manchot                #
+#                                            #
+# 1ère NSI 2022-2023                         #
+##############################################
+""")
+    print("\n"*5)
+    print("Vous disposez d'un capital de départ de 500 € pour jouer au bandit manchot !")
+    print("\n"*2)
+
 
 def main_game() -> int:
     """
@@ -180,7 +244,8 @@ def main_game() -> int:
     Ne peut pas être testée par doctest.
     """
     presentation()
-    capital = 500
+    nom = demander_str('Quel est votre prénom ? ')
+    capital = reprendre_partie_and_set_score(nom)
     
     while True:
         mise = saisir_mise(capital)
@@ -199,28 +264,10 @@ def main_game() -> int:
             print(f"Vous repartez avec la côquette some de {capital}€")
             break
 
-    x = demande_inscription(capital)
+    x = demande_inscription(capital, nom)
     if x is None :
         ask_view_score()
     return capital
-
-
-
-def presentation() -> None :
-    """ fonction affichant la présentation, et donnant les règles du jeu"""
-    print("\n"*50)
-    print("""
-##############################################
-#                                            #
-#              Bandit Manchot                #
-#                                            #
-# 1ère NSI 2022-2023                         #
-##############################################
-""")
-    print("\n"*5)
-    print("Vous disposez d'un capital de départ de 500 € pour jouer au bandit manchot !")
-    print("\n"*2)
-    input("(Appuyez sur la touche Entrée...)")
 
 
 class sauve_score :
@@ -232,36 +279,47 @@ class sauve_score :
         self._write_score()
 
     def _read_previous_save(self) -> None :
+        """
+Lit les score déjà enregistré en modifiant {self.hight_score}
+"""
         try :
             with open('HighScore.txt',"r", encoding="utf-8") as file :
                 lines = file.readlines()
-                self.hight_score = [{"nom":"", "score" : 0, "want_to_replay": False}]*9
-                for i, l in enumerate(lines) :
-                    nom, score, replay = l.split(" / ")
+                self.hight_score = [{"nom":"", "score" : 0, "want_to_replay": False}]*len(lines)
+                for i, line in enumerate(lines) :
+                    nom, score, replay = line.split(" / ")
+                    replay = replay.replace('\n', '')
                     try :
-                        self.hight_score[i] = {"nom" : nom, "score" : int(score), "want_to_replay": bool(replay)}
+                        self.hight_score[i] = {"nom" : nom, "score" : int(score), "want_to_replay": replay}
                     except ValueError :
-                        self.hight_score[i] = {"nom" : nom, "score" :0, "want_to_replay": False}
+                        self.hight_score[i] = {"nom" : nom, "score" :0, "want_to_replay": replay}
             self._same_gamer()
             self._sort_hight_score()
         except FileNotFoundError :
             self.hight_score =[{"nom" : self.nom_j, "score" : self.score_j, "want_to_replay": self.want_to_replay}]
 
     def _same_gamer(self) -> None:
+        """
+Vérifit si le nom du joueur à déjà été enregitré, dans ce cas il enclanche la callback {self.same_name_gamer},
+qui définit le comprtement associé
+"""
         for gamer in self.hight_score:
                 if gamer['nom'] == self.nom_j :
                     self.hight_score.remove(gamer)
                     self.nom_j, self.score_j = self.same_name_gamer(self.nom_j, self.score_j, gamer)
     
     def _sort_hight_score(self) -> None:
-        is_better_than = len(self.hight_score)-1    
-        while is_better_than>=0 and self.score_j>self.hight_score[is_better_than]['score'] :                    
-            if is_better_than != len(self.hight_score)-1 :
-                self.hight_score[is_better_than+1] = self.hight_score[is_better_than]
-            self.hight_score[is_better_than] = {"nom" : self.nom_j, "score" : self.score_j, 'want_to_replay': self.want_to_replay}
-            is_better_than -= 1
-
+        for i, gamer in enumerate(self.hight_score) :
+            saved_gamer_score = int(gamer['score'])
+            if self.score_j >= saved_gamer_score :
+                self.hight_score.insert(i, {"nom" : self.nom_j, "score" : self.score_j, 'want_to_replay': self.want_to_replay})
+                return
+        self.hight_score.append({"nom" : self.nom_j, "score" : self.score_j, 'want_to_replay': self.want_to_replay})
+        
     def _write_score(self) -> None:
+        """"
+écrit le score du joueur dans le fichier HighScore.txt
+"""
         with open("HighScore.txt", "w", encoding="utf8") as file :
             for s in self.hight_score :
                 if s is not None :
@@ -279,12 +337,11 @@ class read_save :
             with open('HighScore.txt',"r", encoding="utf-8") as f  :
                 lines = f.readlines()
         except FileNotFoundError :
-            lines = "Inconnu / 0\n"*9
-        finally:
-            return [{'nom': line.split(" / ")[0], 'score': line.split(" / ")[1], 'want_to_replay': line.split(" / ")[2].replace("\n", "")} for line in lines]
+                return []
+        return [{'nom': line.split(" / ")[0], 'score': int(line.split(" / ")[1]), 'want_to_replay': line.split(" / ")[2].replace("\n", "") == 'True'} for line in lines]
 
     def affiche_score(self) -> str:
-        return "".join(f"{i + 1} {d['nom']:>15} : {d['score']:>10} €\n" for i, d in enumerate(self.get_score()))
+        return "".join(f"{index + 1} {d['nom']:>15} : {d['score']:>11} €\n" for index, d in enumerate(self.get_score()[:10]))
 
 ## La partie ci-dessous n'est effectuée que si vous déclenchez le programme
 ## en tant que programme principal (notion de modules, vue en terminale)
