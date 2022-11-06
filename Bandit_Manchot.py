@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-
 #### PROJET MACHINE A SOUS
 ### 1ère NSI Pavie 2022-2023
 
@@ -124,15 +122,14 @@ def saisir_mise(pot : int) -> int:
     print(f"Vous n'avez pas saisie un entier define entre 10 et {pot}")
     return saisir_mise(pot)
 
-def demander(message = 'Voulez vous rejouer ?') ->  bool :
+def demander(message: str) ->  bool :
     """Fonction demandant au joueur / à la joueuse si il/elle souhaite faire l'action demandé.
     Le joueur/La joueuse doit pouvoir répondre par oui (ou o) ou par non (ou n),
     et la fonction doit être dumbproof.
-    Ne peut pas être testée par doctest.
     """
-    user_input = demander_str(f'{message} (o/n)').lower()
+    user_input = demander_str(f'{message} (o/n) ').lower()
     if user_input not in ['o', 'oui', 'n', 'non'] :
-        print('Je ne comprend pas voulez vous continuer ou arrêter')
+        print('Je ne comprend répondez plutôt par oui ou par non')
         return demander(message)
     return user_input in ['o', 'oui']
 
@@ -152,7 +149,26 @@ def afficher_bandit(chaine : str, gain : int) -> None:
     Fonction affichant dans la console le bandit-manchot, avec le tirage obtenu.
     Affiche aussi le gain réalisé.
     Renvoie None.
-    Ne peut pas être testée par doctest.
+    >>> afficher_bandit('♥7♥', 50)
+    <BLANKLINE>
+        -------------
+        |   |   |   |   o
+        | ♥ | 7 | ♥ |  //
+        |   |   |   | //
+        -------------//
+    <BLANKLINE>
+        Vous gagnez 50 €
+    <BLANKLINE>
+    >>> afficher_bandit('♦♦♦', 10000)
+    <BLANKLINE>
+        -------------
+        |   |   |   |   o
+        | ♦ | ♦ | ♦ |  //
+        |   |   |   | //
+        -------------//
+    <BLANKLINE>
+        Vous gagnez 10000 €
+    <BLANKLINE>
     """
     print(f"""
     -------------
@@ -262,7 +278,7 @@ def main_game() -> int:
         if capital == 0 :
             print("Désolé c'est la fin de la partie vous n'avez plus d'argent")
             break
-        elif not demander():
+        elif not demander('Voulez vous rejouer ?'):
             print(f"Vous repartez avec la côquette some de {capital}€")
             break
 
@@ -343,12 +359,12 @@ class read_save :
         return [{'nom': line.split(" / ")[0], 'score': int(line.split(" / ")[1]), 'want_to_replay': line.split(" / ")[2].replace("\n", "") == 'True'} for line in lines]
 
     def affiche_score(self) -> str:
-        return "".join(f"{index + 1} {d['nom']:>15} : {d['score']:>11} €\n" for index, d in enumerate(self.get_score()[:10]))
+        return "".join(f"{index + 1} {' ' if index != 9 else ''}{d['nom']:>14} : {d['score']:>11} €\n" for index, d in enumerate(self.get_score()[:10]))
 
 ## La partie ci-dessous n'est effectuée que si vous déclenchez le programme
 ## en tant que programme principal (notion de modules, vue en terminale)
 
 if __name__ == "__main__" :
     import doctest
-    doctest.testmod()
+    doctest.testmod(verbose=True)
     main_game()
