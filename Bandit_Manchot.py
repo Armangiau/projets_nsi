@@ -94,6 +94,7 @@ def table_gain(chaine : str, mise: int) -> int:
 >>> table_gain('♠77', 50)
 0
     """
+    assert len(chaine) == 3, 'chaine aléatoire non valide'
     
     # les cas spéciaux de la table codés en dur
     if chaine == '777':
@@ -104,12 +105,13 @@ def table_gain(chaine : str, mise: int) -> int:
         return mise * 20
     elif chaine == 'Ω7Ω' or chaine =='ΩΩ7' or chaine == '7ΩΩ' :
         return mise * 10 
-    elif '7' in chaine and not '77' in chaine and presence_symboles_identiques_multiples(chaine, chaine) : # si la chaine contien un 7 et deux autres carractères identiques
-        return mise * 5
-    elif not presence_symboles_identiques_multiples(chaine, chaine): # si chaque symbole est différent
-        return mise * 2
+    elif presence_symboles_identiques_multiples(chaine, chaine) :
+        if '7' in chaine and not presence_symboles_identiques_multiples('7', chaine) : 
+            return mise * 5  # si la chaine contien un 7 et deux autres carractères identiques
+        else :
+            return 0 # s'il y a 2 symboles identiques et que cela ne corespond à aucun shéma
     else:
-        return 0
+        return mise * 2 # si chaque symbole est différent
     
     
 def saisir_mise(pot : int) -> int:
@@ -303,7 +305,7 @@ Lit les score déjà enregistré en modifiant {self.hight_score}
         try :
             with open('HighScore.txt',"r", encoding="utf-8") as file :
                 lines = file.readlines()
-                self.hight_score = [{"nom":"", "score" : 0, "want_to_replay": False}]*len(lines)
+                self.hight_score = [None]*len(lines)
                 for i, line in enumerate(lines) :
                     nom, score, replay = line.split(" / ")
                     replay = replay.replace('\n', '')
