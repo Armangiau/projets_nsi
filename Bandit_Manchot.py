@@ -341,8 +341,7 @@ class sauve_score :
 
 class read_save :
     def get_score(self):
-        """ Fonction récupérant les HighScore sauvegardés depuis un fichier HishScore.txt,
-            et qui renvoie une chaine de caractères correctement formatée pour la console"""
+        """ Fonction récupérant les HighScore sauvegardés depuis un fichier HishScore.txt"""
         try :
             with open('HighScore.txt',"r", encoding="utf-8") as file :
                 lines = file.readlines()
@@ -361,6 +360,7 @@ class read_save :
 
 
     def affiche_score(self) -> str:
+        """Renvoie une chaine de caractères des HighScore correctement formatée pour la console"""
         return "".join(f"{index + 1} {' ' if index != 9 else ''}{d['nom']:>14} : {d['score']:>11} €\n" for index, d in enumerate(self.get_score()[:10]))
 
 ## La partie ci-dessous n'est effectuée que si vous déclenchez le programme
