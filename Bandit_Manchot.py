@@ -188,7 +188,7 @@ def same_gamer(name, score, same_name_gamer) :
     elle revoie le nom de la partie avec le meilleur score si l'utillisateur nous confirme avoir déjà joué,
     sinon elle demande un nouveau nom à l'utilisateur
 """
-    if same_name_gamer['want_to_replay'] == 'True' :
+    if same_name_gamer['want_to_replay']:
         return name, score
     if demander('Avez vous déjà joué avec ce nom ?') :
         if same_name_gamer['score'] < score :
@@ -295,51 +295,42 @@ class sauve_score :
     def __init__(self, nom_j : str, score_j: int, want_to_replay: bool, same_name_gamer) -> None :
         self.nom_j, self.score_j, self.want_to_replay = nom_j, score_j, want_to_replay
         self.same_name_gamer = same_name_gamer
+        self.hight_score = []
         self._read_previous_save()
         self._write_score()
 
     def _read_previous_save(self) -> None :
         """
-Lit les score déjà enregistré en modifiant {self.hight_score}
-"""
-        try :
-            with open('HighScore.txt',"r", encoding="utf-8") as file :
-                lines = file.readlines()
-                self.hight_score = [None]*len(lines)
-                for i, line in enumerate(lines) :
-                    nom, score, replay = line.split(" / ")
-                    replay = replay.replace('\n', '')
-                    try :
-                        self.hight_score[i] = {"nom" : nom, "score" : int(score), "want_to_replay": replay}
-                    except ValueError :
-                        self.hight_score[i] = {"nom" : nom, "score" :0, "want_to_replay": replay}
-            self._same_gamer()
-            self._sort_hight_score()
-        except FileNotFoundError :
-            self.hight_score =[{"nom" : self.nom_j, "score" : self.score_j, "want_to_replay": self.want_to_replay}]
+    Lit les score déjà enregistré en modifiant {self.hight_score}
+    """
+        self.hight_score = read_save().get_score()
+        self._same_gamer()
+        self._add_new_player()
 
     def _same_gamer(self) -> None:
         """
-Vérifit si le nom du joueur à déjà été enregitré, dans ce cas il enclanche la callback {self.same_name_gamer},
-qui définit le comprtement associé
-"""
+    Vérifit si le nom du joueur à déjà été enregitré, dans ce cas il enclanche la callback {self.same_name_gamer},
+    qui définit le comprtement associé
+    """
         for gamer in self.hight_score:
                 if gamer['nom'] == self.nom_j :
                     self.hight_score.remove(gamer)
                     self.nom_j, self.score_j = self.same_name_gamer(self.nom_j, self.score_j, gamer)
     
-    def _sort_hight_score(self) -> None:
+    def _add_new_player(self) -> None:
+        """
+    Ajoute le nouveau à sa place dans le classement 
+    """
         for i, gamer in enumerate(self.hight_score) :
-            saved_gamer_score = int(gamer['score'])
-            if self.score_j >= saved_gamer_score :
+            if self.score_j >= gamer['score'] :
                 self.hight_score.insert(i, {"nom" : self.nom_j, "score" : self.score_j, 'want_to_replay': self.want_to_replay})
                 return
         self.hight_score.append({"nom" : self.nom_j, "score" : self.score_j, 'want_to_replay': self.want_to_replay})
         
     def _write_score(self) -> None:
         """"
-écrit le score du joueur dans le fichier HighScore.txt
-"""
+    écrit le score du joueur dans le fichier HighScore.txt
+    """
         with open("HighScore.txt", "w", encoding="utf8") as file :
             for s in self.hight_score :
                 if s is not None :
@@ -352,13 +343,22 @@ class read_save :
     def get_score(self):
         """ Fonction récupérant les HighScore sauvegardés depuis un fichier HishScore.txt,
             et qui renvoie une chaine de caractères correctement formatée pour la console"""
-        lines =""
-        try:
-            with open('HighScore.txt',"r", encoding="utf-8") as f  :
-                lines = f.readlines()
+        try :
+            with open('HighScore.txt',"r", encoding="utf-8") as file :
+                lines = file.readlines()
+                hight_score = [None]*len(lines)
+                for i, line in enumerate(lines) :
+                    nom, score, replay = line.split(" / ")
+                    replay = replay.replace('\n', '')
+                    try :
+                        hight_score[i] = {"nom" : nom, "score" : int(score), "want_to_replay": (replay == 'True')}
+                    except ValueError :
+                        hight_score[i] = {"nom" : nom, "score" :0, "want_to_replay": (replay == 'True')}
+                return  hight_score
         except FileNotFoundError :
-                return []
-        return [{'nom': line.split(" / ")[0], 'score': int(line.split(" / ")[1]), 'want_to_replay': line.split(" / ")[2].replace("\n", "") == 'True'} for line in lines]
+            return []
+
+
 
     def affiche_score(self) -> str:
         return "".join(f"{index + 1} {' ' if index != 9 else ''}{d['nom']:>14} : {d['score']:>11} €\n" for index, d in enumerate(self.get_score()[:10]))
